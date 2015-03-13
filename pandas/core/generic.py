@@ -1988,6 +1988,12 @@ class NDFrame(PandasObject):
             # If any other type cases arise, throw error. 
             elif type(weights) != np.ndarray:
                 raise ValueError("Weights must be a Series, list, numpy array, or -- if dataframe -- string name of column")
+
+
+            # Check length (numpy does this, but has confusing errors with different argument labels.)
+            if len(weights) != length:
+                raise ValueError("Weights and data to be sampled must be of same length")
+
     
     
         # Check whether frac or N
