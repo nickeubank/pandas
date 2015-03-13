@@ -1932,40 +1932,53 @@ class NDFrame(PandasObject):
         return self.iloc[-n:]
 
     
-    def rand(self, size = 5, size_type = 'number', replacement = False, weights = None, seed = None):
+    def sample(self, n = None, frac = None , replace = False, weights = None, seed = None):
         """
         Returns a sample of rows from object. 
+
+        Note that .sample() (with no arguments) will return five random rows.
     
         Parameters
         ----------
-            size: Number of rows (if size_type = 'number') or 
-                  share of rows (if size_type = 'frac'). Default 5.
-            size_type {'number', 'frac'}: 
-                  If 'number': return a sample with 'size' 
-                  number of rows. 
-                  If 'frac', return 'size' fraction of rows. 
-                  Default is 'number'. 
-            replacement {True, False}: Sample with or without replacement.
-            weights: Vector of weights. Must be same length as index.  
+            n: Number of rows to return. Cannot be used with frac.
+               Default = 5 if frac = None. 
+            frac: share of rows to return. Cannot be used with n. 
+            replace {True, False}: Sample with or without replacement.
+            weights: Series or ndarray of weights. Must be same length as index.  
                      Default 'None' results in equal probability weighting.
             seed: seed to be fed to numpy random.RandomState() Function. Default None. 
         """
+
         # Setup vars
         rs = np.random.RandomState(seed)
         length = len(self)
-        
-        # Actual executions
-        if size_type == 'number':
-            locs = rs.choice(length, size = size, replace = replacement, p = weights)
-            return self.take(locs, axis=0)
+
+        # Check weights for compliance
+        if weights != None:
+            # Check length
+            if len(weights) != length:
+                raise ValueError("Length of weights must be equal to number of rows")
+            
+            # Check type
+            if type(weights) == pd.core.series.Series:
+                weights = weights.values
+            elif type(weights) != np.ndarray:
+                raise ValueError("Weights must be a Series or numpy array")
+
+
+        # Check whether frac or N
+        if n == None and frac == None:
+            n = 5
+        elif n == None and frac != None:
+            n = int(round(frac * length)) 
+        elif n != None and frac != None:
+            raise NotImplementedError('Must only enter a value for "frac" OR "n", not both')
+
+
+        locs = rs.choice(length, size = n, replace = replace, p = weights)
+        return self.take(locs, axis=0)
          
-        if size_type == 'frac':
-            # Check value
-            if size > 1 or size < 0:
-                 raise TypeError("Size must be between 0 and 1 if size_type = 'frac'")
                  
-            n = int(round(size * length))
-            return rand(self, size = n, size_type = 'number', replacement = replacement, weights = weights, seed=seed)
     
     
     #----------------------------------------------------------------------
