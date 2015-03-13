@@ -1931,10 +1931,11 @@ class NDFrame(PandasObject):
             return self
         return self.iloc[-n:]
 
+    
     def rand(self, size = 5, size_type = 'number', replacement = False, weights = None, seed = None):
         """
         Returns a sample of rows from object. 
-
+    
         Parameters
         ----------
             size: Number of rows (if size_type = 'number') or 
@@ -1964,8 +1965,9 @@ class NDFrame(PandasObject):
                  raise TypeError("Size must be between 0 and 1 if size_type = 'frac'")
                  
             n = int(round(size * length))
-            self.rand(size = n, size_type = 'number', replacement = replacement, weight = weights, seed=seed)
-
+            return rand(self, size = n, size_type = 'number', replacement = replacement, weights = weights, seed=seed)
+    
+    
     #----------------------------------------------------------------------
     # Attribute access
 
