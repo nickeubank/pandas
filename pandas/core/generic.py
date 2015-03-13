@@ -1955,7 +1955,7 @@ class NDFrame(PandasObject):
         
         # Actual executions
         if size_type == 'number':
-            locs = rs.choice(length, size = size, replace = replacement, p = weight)
+            locs = rs.choice(length, size = size, replace = replacement, p = weights)
             return self.take(locs, axis=0)
          
         if size_type == 'frac':
@@ -1964,7 +1964,7 @@ class NDFrame(PandasObject):
                  raise TypeError("Size must be between 0 and 1 if size_type = 'frac'")
                  
             n = int(round(size * length))
-            rand(self, size = n, size_type = 'number', replacement = replacement, weight=weight, seed=seed)
+            self.rand(size = n, size_type = 'number', replacement = replacement, weight = weights, seed=seed)
 
     #----------------------------------------------------------------------
     # Attribute access
