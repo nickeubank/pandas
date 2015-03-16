@@ -1990,7 +1990,7 @@ class NDFrame(PandasObject):
             # If this is a dataframe and we get a string, check for column. 
             elif type(self) == pd.core.frame.DataFrame and (type(weights) == str or type(weights) == unicode):
                 try: 
-                    weights = self[weights]
+                    weights = self[weights].values
                 except: 
                     raise ValueError("Weights string not valid column name")
                 

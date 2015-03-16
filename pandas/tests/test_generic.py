@@ -354,14 +354,53 @@ class Generic(object):
             self._compare(o.head(-3), o.head(7))
             self._compare(o.tail(-3), o.tail(7))
 
-    def test_rand(self):
+    def test_sample(self):
         o = self._construct(shape=10)
-        seed = np.random.randint(0,10000)
         
-        # Check seeding
-        self._compare(o.rand(seed = seed), o.rand(seed = seed))
-   
-        # Check full draw without replacement has all elements
+        # Run for all index types. 
+        for index in [ tm.makeFloatIndex, tm.makeIntIndex,
+                       tm.makeStringIndex, tm.makeUnicodeIndex,
+                       tm.makeDateIndex, tm.makePeriodIndex ]:
+            axis = o._get_axis_name(0)
+            setattr(o,axis,index(len(getattr(o,axis))))
+
+            # Check seeding -- run 10 times. 
+            for test in range(10):
+                seed = np.random.randint(0,100)
+                self._compare(o.sample(n = 4, seed = seed), o.sample(n = 4, seed = seed))
+                self._compare(o.sample(frac = 0.7,seed = seed), o.sample(frac = 0.7, seed = seed))        
+    
+            # Check full draw without replacement has all elements
+            
+            # Giving both frac and N throws error
+            with tm.assertRaises(NotImplementedError):
+                o.sample(n=3, frac = 0.3)
+
+            # Weight length must be right            
+            with tm.assertRaises(ValueError):
+                o.sample(n=3, weights = [0,1])
+            with tm.assertRaises(ValueError):
+                bad_weights = [0.5]*11
+                o.sample(n=3, weights = bad_weights)
+    
+        # Ensure proper error if string given as weight for Series
+        o = Series(range(10))
+        with tm.assertRaises(ValueError):
+            o.sample(n=3, weights = 'weightColumn')
+
+
+        # I'm not quite comfortable with the self-constructor, so do a 
+        # few with my own dataframe. 
+        easy_weight_list = [0]*10
+        easy_weight_list[5] = 1
+        
+        df = pd.DataFrame({'col1':range(10,20), 'col2':range(20,30), 
+                        'colString': ['a']*10,
+                        'easyweights':easy_weight_list})    
+        sample1 = df.sample(n=1, weights = 'easyweights') 
+        assert_frame_equal(sample1, df.iloc[5])
+ 
+
 
     def test_size_compat(self):
         # GH8846
