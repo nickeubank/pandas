@@ -1265,6 +1265,14 @@ class NDFrame(PandasObject):
             except:
                 pass
 
+            # we might be a false positive
+            try:
+                if self.is_copy().shape == self.shape:
+                    self.is_copy = None
+                    return
+            except:
+                pass
+
             # a custom message
             if isinstance(self.is_copy, string_types):
                 t = self.is_copy
@@ -1344,8 +1352,9 @@ class NDFrame(PandasObject):
         result = self._constructor(new_data).__finalize__(self)
 
         # maybe set copy if we didn't actually change the index
-        if is_copy and not result._get_axis(axis).equals(self._get_axis(axis)):
-            result._set_is_copy(self)
+        if is_copy:
+            if not result._get_axis(axis).equals(self._get_axis(axis)):
+                result._set_is_copy(self)
 
         return result
 
@@ -2083,6 +2092,14 @@ class NDFrame(PandasObject):
     #----------------------------------------------------------------------
     # Consolidation of internals
 
+    def _protect_consolidate(self, f):
+        """ consolidate _data. if the blocks have changed, then clear the cache """
+        blocks_before = len(self._data.blocks)
+        result = f()
+        if len(self._data.blocks) != blocks_before:
+            self._clear_item_cache()
+        return result
+
     def _consolidate_inplace(self):
         f = lambda: self._data.consolidate()
         self._data = self._protect_consolidate(f)
@@ -2107,8 +2124,6 @@ class NDFrame(PandasObject):
         else:
             f = lambda: self._data.consolidate()
             cons_data = self._protect_consolidate(f)
-            if cons_data is self._data:
-                cons_data = cons_data.copy()
             return self._constructor(cons_data).__finalize__(self)
 
     @property
@@ -2143,13 +2158,6 @@ class NDFrame(PandasObject):
                     'Cannot do inplace boolean setting on mixed-types with a non np.nan value')
 
         return True
-
-    def _protect_consolidate(self, f):
-        blocks_before = len(self._data.blocks)
-        result = f()
-        if len(self._data.blocks) != blocks_before:
-            self._clear_item_cache()
-        return result
 
     def _get_numeric_data(self):
         return self._constructor(
