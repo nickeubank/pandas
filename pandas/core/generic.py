@@ -1975,7 +1975,6 @@ class NDFrame(PandasObject):
     
         # Setup vars
         rs = np.random.RandomState(seed)
-        length = len(self)
     
         # Check weights for compliance
         if weights is not None:
@@ -1994,15 +1993,15 @@ class NDFrame(PandasObject):
             weights = np.asarray(weights)
                 
             # Check length (numpy does this, but has confusing errors with different argument labels.)
-            if len(weights) != length:
+            if len(weights) != len(self):
                 raise ValueError("Weights and data to be sampled must be of same length")
 
     
         # Check whether frac or N
-        if n == None and frac == None:
+        if n is None and frac is None:
             n = 5
-        elif n == None and frac is not None:
-            n = int(round(frac * length)) 
+        elif n is None and frac is not None:
+            n = int(round(frac * len(self))) 
         elif n is not None and frac is not None:
             raise ValueError('Please enter a value for "frac" OR "n", not both')
     
@@ -2010,7 +2009,7 @@ class NDFrame(PandasObject):
         if n < 0:
             raise ValueError("A negative number of rows requested. Please provide positive value.")
     
-        locs = rs.choice(length, size = n, replace = replace, p = weights)
+        locs = rs.choice(len(self), size = n, replace = replace, p = weights)
         return self.take(locs, axis=0)
 
     
