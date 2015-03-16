@@ -398,7 +398,7 @@ class Generic(object):
                         'colString': ['a']*10,
                         'easyweights':easy_weight_list})    
         sample1 = df.sample(n=1, weights = 'easyweights') 
-        assert_frame_equal(sample1, df.iloc[5])
+        assert_frame_equal(sample1, df.iloc[5:6])
  
 
 
