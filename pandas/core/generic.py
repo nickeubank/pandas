@@ -1978,7 +1978,7 @@ class NDFrame(PandasObject):
         length = len(self)
     
         # Check weights for compliance
-        if weights != None:
+        if weights is not None:
                                       
             # Strings acceptable if not a series
             if isinstance(weights, string_types) and self.ndim >1 :
