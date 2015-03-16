@@ -370,7 +370,6 @@ class Generic(object):
                 self._compare(o.sample(n = 4, seed = seed), o.sample(n = 4, seed = seed))
                 self._compare(o.sample(frac = 0.7,seed = seed), o.sample(frac = 0.7, seed = seed))        
     
-            # Check full draw without replacement has all elements
             
             # Giving both frac and N throws error
             with tm.assertRaises(NotImplementedError):
@@ -386,17 +385,17 @@ class Generic(object):
         # Ensure proper error if string given as weight for Series
         o = Series(range(10))
         with tm.assertRaises(ValueError):
-            o.sample(n=3, weights = 'weightColumn')
+            o.sample(n=3, weights = 'weight_column')
 
 
-        # I'm not quite comfortable with the self-constructor, so do a 
-        # few with my own dataframe. 
+        # A few dataframe test with degenerate weights. 
         easy_weight_list = [0]*10
         easy_weight_list[5] = 1
         
-        df = pd.DataFrame({'col1':range(10,20), 'col2':range(20,30), 
-                        'colString': ['a']*10,
-                        'easyweights':easy_weight_list})    
+        df = pd.DataFrame({'col1':range(10,20), 
+                           'col2':range(20,30), 
+                           'colString': ['a']*10,
+                           'easyweights':easy_weight_list})    
         sample1 = df.sample(n=1, weights = 'easyweights') 
         assert_frame_equal(sample1, df.iloc[5:6])
  
