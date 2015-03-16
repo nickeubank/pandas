@@ -1941,36 +1941,36 @@ class NDFrame(PandasObject):
         return self.iloc[-n:]
 
   
-    def sample(self, n = None, frac = None , replace = False, weights = None, seed = None):
+    def sample(self, n=None, frac=None , replace=False, weights=None, seed=None):
         """
         Returns a sample of rows from object. 
-    
-        Note that .sample() (with no arguments) will return five random rows.
-    
+        
         Parameters
         ----------
-            n: Number of rows to return. Cannot be used with frac.
-               Default = 5 if frac = None. 
-            frac: share of rows to return. Cannot be used with n. 
-            replace {True, False}: Sample with or without replacement.
-            weights: Accepts a Series, list, or ndarray of weights. If called on a 
-                    DataFrame, will also accept the name of a column as a string. 
-                    Must be same length as index.  
-                    Default 'None' results in equal probability weighting.
-            seed: seed to be fed to numpy random.RandomState() Function. Default None. 
+        n: in, optional, Default = 5 if frac = None. 
+            Number of rows to return. Cannot be used with frac.
+        frac: float. Default = None, S
+            Share of rows to return. Cannot be used with n. 
+        replace: boolean. Default = False. 
+            Sample with or without replacement. 
+        weights: Series, list, or ndarray. Default = None.
+            Default 'None' results in equal probability weighting. 
+            If called on a DataFrame or Panel, will also accept the name of a 
+            column as a string. Must be same length as index. 
+            Weights must be normalized. 
+        seed: int. Default = None. 
+            seed to be fed to numpy random.RandomState() Function.
+            
+        Returns
+        -------
+        Frame of same type as caller. 
+
+        Notes
+        -----
+        When called without arguments (.sample()), returns 5 random columns
+        in a manner analogous to .head() or .tail(). 
+
         -----------
-        Note: sample sizes are passed to numpy.random.choice(), which accepts negative values. 
-              
-              If a negative value is passed, this will be interpreted with respect to 
-              number of rows. So n = -1 will result in a sample with 
-              [original number of rows - 1] rows.
-              
-              A similar behavior applies to values passed to frac. A value of frac = -0.75 
-              will return a sample with a size of [0.25 * original number of rows] rows, 
-              give or take rounding. 
-              
-              Finally, note that non-integer arguments passed to n will be rounded off by numpy. 
-              So n = 3.1 will return 3 rows, and n = 3.9 rows will return 4 rows. 
         """
     
         # Setup vars
@@ -1980,39 +1980,35 @@ class NDFrame(PandasObject):
         # Check weights for compliance
         if weights != None:
                                       
-            # If series, return ndarray
-            if type(weights) == pd.core.series.Series:
-                weights = weights.values
-                
-            elif type(weights) == list:
-                pass
-    
-            # If this is a dataframe and we get a string, check for column. 
-            elif type(self) == pd.core.frame.DataFrame and (type(weights) == str or type(weights) == unicode):
-                try: 
-                    weights = self[weights].values
-                except: 
-                    raise ValueError("Weights string not valid column name")
-                
-            # If any other type cases arise, throw error. 
-            elif type(weights) != np.ndarray:
-                raise ValueError("Weights must be a Series, list, numpy array, or -- if dataframe -- string name of column")
+            # Strings acceptable if not a series
+            if isinstance(weights, string_types) and self.ndim >1 :
+                try:
+                    weights = self[weights]
+                except(KeyError):
+                    raise KeyError("String passed to weights not a valid column name")
+            
+            if isinstance(weights, string_types) and self.ndim == 1:
+                raise ValueError("Strings cannot be passed as weights when sampling from a Series.")
 
-
+            #normalize format of weights to ndarray. 
+            weights = np.asarray(weights)
+                
             # Check length (numpy does this, but has confusing errors with different argument labels.)
             if len(weights) != length:
                 raise ValueError("Weights and data to be sampled must be of same length")
 
     
-    
         # Check whether frac or N
         if n == None and frac == None:
             n = 5
-        elif n == None and frac != None:
+        elif n == None and frac is not None:
             n = int(round(frac * length)) 
-        elif n != None and frac != None:
-            raise NotImplementedError('Please enter a value for "frac" OR "n", not both')
+        elif n is not None and frac is not None:
+            raise ValueError('Please enter a value for "frac" OR "n", not both')
     
+        # Check for negative sizes
+        if n < 0:
+            raise ValueError("A negative number of rows requested. Please provide positive value.")
     
         locs = rs.choice(length, size = n, replace = replace, p = weights)
         return self.take(locs, axis=0)

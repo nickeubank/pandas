@@ -357,30 +357,24 @@ class Generic(object):
     def test_sample(self):
         o = self._construct(shape=10)
         
-        # Run for all index types. 
-        for index in [ tm.makeFloatIndex, tm.makeIntIndex,
-                       tm.makeStringIndex, tm.makeUnicodeIndex,
-                       tm.makeDateIndex, tm.makePeriodIndex ]:
-            axis = o._get_axis_name(0)
-            setattr(o,axis,index(len(getattr(o,axis))))
 
-            # Check seeding -- run 10 times. 
-            for test in range(10):
-                seed = np.random.randint(0,100)
-                self._compare(o.sample(n = 4, seed = seed), o.sample(n = 4, seed = seed))
-                self._compare(o.sample(frac = 0.7,seed = seed), o.sample(frac = 0.7, seed = seed))        
+        # Check seeding -- run 10 times. 
+        for test in range(10):
+            seed = np.random.randint(0,100)
+            self._compare(o.sample(n = 4, seed = seed), o.sample(n = 4, seed = seed))
+            self._compare(o.sample(frac = 0.7,seed = seed), o.sample(frac = 0.7, seed = seed))        
     
-            
-            # Giving both frac and N throws error
-            with tm.assertRaises(NotImplementedError):
-                o.sample(n=3, frac = 0.3)
+        
+        # Giving both frac and N throws error
+        with tm.assertRaises(ValueError):
+            o.sample(n=3, frac = 0.3)
 
-            # Weight length must be right            
-            with tm.assertRaises(ValueError):
-                o.sample(n=3, weights = [0,1])
-            with tm.assertRaises(ValueError):
-                bad_weights = [0.5]*11
-                o.sample(n=3, weights = bad_weights)
+        # Weight length must be right            
+        with tm.assertRaises(ValueError):
+            o.sample(n=3, weights = [0,1])
+        with tm.assertRaises(ValueError):
+            bad_weights = [0.5]*11
+            o.sample(n=3, weights = bad_weights)
     
         # Ensure proper error if string given as weight for Series
         o = Series(range(10))
@@ -398,6 +392,10 @@ class Generic(object):
                            'easyweights':easy_weight_list})    
         sample1 = df.sample(n=1, weights = 'easyweights') 
         assert_frame_equal(sample1, df.iloc[5:6])
+
+        # Check weighting key error        
+        with tm.assertRaises(KeyError):
+            df.sample(n = 3, weights = 'not_a_real_column_name')
  
 
 
