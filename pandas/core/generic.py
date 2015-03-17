@@ -1963,11 +1963,11 @@ class NDFrame(PandasObject):
             
         Returns
         -------
-        Frame of same type as caller. 
+        Same type as caller. 
 
         Notes
         -----
-        When called without arguments (.sample()), returns 5 random columns
+        When called without arguments (.sample()), returns 5 random rows
         in a manner analogous to .head() or .tail(). 
 
         -----------
@@ -2003,7 +2003,7 @@ class NDFrame(PandasObject):
         elif n is None and frac is not None:
             n = int(round(frac * len(self))) 
         elif n is not None and frac is not None:
-            raise ValueError('Please enter a value for "frac" OR "n", not both')
+            raise ValueError('Please enter a value for `frac` OR `n`, not both')
     
         # Check for negative sizes
         if n < 0:

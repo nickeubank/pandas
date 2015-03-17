@@ -369,6 +369,12 @@ class Generic(object):
         with tm.assertRaises(ValueError):
             o.sample(n=3, frac = 0.3)
 
+        # Check that raises right error for negative lengths
+        with tm.assertRaises(ValueError):
+            o.sample(n= -3)
+        with tm.assertRaises(ValueError):
+            o.sample(frac = - 0.3)
+
         # Weight length must be right            
         with tm.assertRaises(ValueError):
             o.sample(n=3, weights = [0,1])
