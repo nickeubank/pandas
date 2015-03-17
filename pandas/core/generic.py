@@ -1947,28 +1947,25 @@ class NDFrame(PandasObject):
         
         Parameters
         ----------
-        n: in, optional, Default = 5 if frac = None. 
+        n: int, optional.
             Number of rows to return. Cannot be used with frac.
-        frac: float. Default = None, S
+            Default = 5 if frac = None. 
+        frac: float. 
             Share of rows to return. Cannot be used with n. 
-        replace: boolean. Default = False. 
-            Sample with or without replacement. 
-        weights: Series, list, or ndarray. Default = None.
+            Default = None.
+        replace: boolean. 
+            Sample with or without replacement. Default = False. 
+        weights: str or ndarray-like, optional.
             Default 'None' results in equal probability weighting. 
             If called on a DataFrame or Panel, will also accept the name of a 
             column as a string. Must be same length as index. 
             Weights must be normalized. 
-        seed: int. Default = None. 
-            seed to be fed to numpy random.RandomState() Function.
+        seed: int.
+            Seed for the random number generator.  Default = None. 
             
         Returns
         -------
         Same type as caller. 
-
-        Notes
-        -----
-        When called without arguments (.sample()), returns 5 random rows
-        in a manner analogous to .head() or .tail(). 
 
         -----------
         """
