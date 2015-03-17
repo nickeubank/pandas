@@ -1943,7 +1943,7 @@ class NDFrame(PandasObject):
   
     def sample(self, n=None, frac=None , replace=False, weights=None, seed=None):
         """
-        Returns a sample of rows from object. 
+        Returns a random sample of rows from object. 
         
         Parameters
         ----------
