@@ -374,6 +374,16 @@ class Generic(object):
             o.sample(n= -3)
         with tm.assertRaises(ValueError):
             o.sample(frac = - 0.3)
+            
+        # Make sure float values of `n` give error
+        with tm.assertRaises(ValueError):
+            o.sample(n= 3.2)
+
+        # Check lengths are right
+        self.assertTrue(len(o.sample(n = 4) == 4))
+        self.assertTrue(len(o.sample(frac = 0.34) == 3))
+        self.assertTrue(len(o.sample(frac = 0.36) == 4))
+          
 
         # Weight length must be right            
         with tm.assertRaises(ValueError):

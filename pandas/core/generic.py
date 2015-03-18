@@ -1947,21 +1947,20 @@ class NDFrame(PandasObject):
         
         Parameters
         ----------
-        n: int, optional.
+        n : int, optional
             Number of rows to return. Cannot be used with frac.
             Default = 5 if frac = None. 
-        frac: float. 
+        frac : float 
             Share of rows to return. Cannot be used with n. 
-            Default = None.
-        replace: boolean. 
+        replace : boolean
             Sample with or without replacement. Default = False. 
-        weights: str or ndarray-like, optional.
+        weights : str or ndarray-like, optional
             Default 'None' results in equal probability weighting. 
             If called on a DataFrame or Panel, will also accept the name of a 
             column as a string. Must be same length as index. 
             Weights must be normalized. 
-        seed: int.
-            Seed for the random number generator.  Default = None. 
+        seed : int
+            Seed for the random number generator.
             
         Returns
         -------
@@ -1977,14 +1976,16 @@ class NDFrame(PandasObject):
         if weights is not None:
                                       
             # Strings acceptable if not a series
-            if isinstance(weights, string_types) and self.ndim >1 :
-                try:
-                    weights = self[weights]
-                except(KeyError):
-                    raise KeyError("String passed to weights not a valid column name")
-            
-            if isinstance(weights, string_types) and self.ndim == 1:
-                raise ValueError("Strings cannot be passed as weights when sampling from a Series.")
+            if isinstance(weights, string_types): 
+
+                if self.ndim >1 :
+                    try:
+                        weights = self[weights]
+                    except(KeyError):
+                        raise KeyError("String passed to weights not a valid column name")
+
+                elif self.ndim == 1:
+                    raise ValueError("Strings cannot be passed as weights when sampling from a Series.")
 
             #normalize format of weights to ndarray. 
             weights = np.asarray(weights)
@@ -1997,6 +1998,8 @@ class NDFrame(PandasObject):
         # Check whether frac or N
         if n is None and frac is None:
             n = 5
+        elif n is not None and frac is None and n % 1 != 0:
+            raise ValueError("Only integers accepted as `n` values")
         elif n is None and frac is not None:
             n = int(round(frac * len(self))) 
         elif n is not None and frac is not None:
