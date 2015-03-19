@@ -3271,28 +3271,96 @@ You could inadvertently turn an actual ``nan`` value into a missing value.
    store.append('dfss2', dfss, nan_rep='_nan_')
    store.select('dfss2')
 
+.. _io.external_compatibility:
+
 External Compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
 
-``HDFStore`` write ``table`` format objects in specific formats suitable for
+``HDFStore`` writes ``table`` format objects in specific formats suitable for
 producing loss-less round trips to pandas objects. For external
 compatibility, ``HDFStore`` can read native ``PyTables`` format
-tables. It is possible to write an ``HDFStore`` object that can easily
-be imported into ``R`` using the ``rhdf5`` library. Create a table
-format store like this:
+tables.
 
-     .. ipython:: python
+It is possible to write an ``HDFStore`` object that can easily be imported into ``R`` using the
+``rhdf5`` library (`Package website`_). Create a table format store like this:
 
-        store_export = HDFStore('export.h5')
-        store_export.append('df_dc', df_dc, data_columns=df_dc.columns)
-        store_export
+.. _package website: http://www.bioconductor.org/packages/release/bioc/html/rhdf5.html
 
-     .. ipython:: python
-        :suppress:
+.. ipython:: python
 
-        store_export.close()
-        import os
-        os.remove('export.h5')
+   np.random.seed(1)
+   df_for_r = pd.DataFrame({"first": np.random.rand(100),
+                            "second": np.random.rand(100),
+                            "class": np.random.randint(0, 2, (100,))},
+                            index=range(100))
+   df_for_r.head()
+
+   store_export = HDFStore('export.h5')
+   store_export.append('df_for_r', df_for_r, data_columns=df_dc.columns)
+   store_export
+
+.. ipython:: python
+   :suppress:
+
+   store_export.close()
+   import os
+   os.remove('export.h5')
+
+In R this file can be read into a ``data.frame`` object using the ``rhdf5``
+library. The following example function reads the corresponding column names
+and data values from the values and assembles them into a ``data.frame``:
+
+.. code-block:: R
+
+   # Load values and column names for all datasets from corresponding nodes and
+   # insert them into one data.frame object.
+
+   library(rhdf5)
+
+   loadhdf5data <- function(h5File) {
+
+   listing <- h5ls(h5File)
+   # Find all data nodes, values are stored in *_values and corresponding column
+   # titles in *_items
+   data_nodes <- grep("_values", listing$name)
+   name_nodes <- grep("_items", listing$name)
+   data_paths = paste(listing$group[data_nodes], listing$name[data_nodes], sep = "/")
+   name_paths = paste(listing$group[name_nodes], listing$name[name_nodes], sep = "/")
+   columns = list()
+   for (idx in seq(data_paths)) {
+     # NOTE: matrices returned by h5read have to be transposed to to obtain
+     # required Fortran order!
+     data <- data.frame(t(h5read(h5File, data_paths[idx])))
+     names <- t(h5read(h5File, name_paths[idx]))
+     entry <- data.frame(data)
+     colnames(entry) <- names
+     columns <- append(columns, entry)
+   }
+
+   data <- data.frame(columns)
+
+   return(data)
+   }
+
+Now you can import the ``DataFrame`` into R:
+
+.. code-block:: R
+
+   > data = loadhdf5data("transfer.hdf5")
+   > head(data)
+            first    second class
+   1 0.4170220047 0.3266449     0
+   2 0.7203244934 0.5270581     0
+   3 0.0001143748 0.8859421     1
+   4 0.3023325726 0.3572698     1
+   5 0.1467558908 0.9085352     1
+   6 0.0923385948 0.6233601     1
+
+.. note::
+   The R function lists the entire HDF5 file's contents and assembles the
+   ``data.frame`` object from all matching nodes, so use this only as a
+   starting point if you have stored multiple ``DataFrame`` objects to a
+   single HDF5 file.
 
 Backwards Compatibility
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -3307,53 +3375,53 @@ method ``copy`` to take advantage of the updates. The group attribute
 number of options, please see the docstring.
 
 
-     .. ipython:: python
-        :suppress:
+.. ipython:: python
+   :suppress:
 
-        import os
-        legacy_file_path = os.path.abspath('source/_static/legacy_0.10.h5')
+   import os
+   legacy_file_path = os.path.abspath('source/_static/legacy_0.10.h5')
 
-     .. ipython:: python
+.. ipython:: python
 
-        # a legacy store
-        legacy_store = HDFStore(legacy_file_path,'r')
-        legacy_store
+   # a legacy store
+   legacy_store = HDFStore(legacy_file_path,'r')
+   legacy_store
 
-        # copy (and return the new handle)
-        new_store = legacy_store.copy('store_new.h5')
-        new_store
-        new_store.close()
+   # copy (and return the new handle)
+   new_store = legacy_store.copy('store_new.h5')
+   new_store
+   new_store.close()
 
-     .. ipython:: python
-        :suppress:
+.. ipython:: python
+   :suppress:
 
-        legacy_store.close()
-        import os
-        os.remove('store_new.h5')
+   legacy_store.close()
+   import os
+   os.remove('store_new.h5')
 
 
 Performance
 ~~~~~~~~~~~
 
-   - ``Tables`` come with a writing performance penalty as compared to
-     regular stores. The benefit is the ability to append/delete and
-     query (potentially very large amounts of data).  Write times are
-     generally longer as compared with regular stores. Query times can
-     be quite fast, especially on an indexed axis.
-   - You can pass ``chunksize=<int>`` to ``append``, specifying the
-     write chunksize (default is 50000). This will significantly lower
-     your memory usage on writing.
-   - You can pass ``expectedrows=<int>`` to the first ``append``,
-     to set the TOTAL number of expected rows that ``PyTables`` will
-     expected. This will optimize read/write performance.
-   - Duplicate rows can be written to tables, but are filtered out in
-     selection (with the last items being selected; thus a table is
-     unique on major, minor pairs)
-   - A ``PerformanceWarning`` will be raised if you are attempting to
-     store types that will be pickled by PyTables (rather than stored as
-     endemic types). See
-     `Here <http://stackoverflow.com/questions/14355151/how-to-make-pandas-hdfstore-put-operation-faster/14370190#14370190>`__
-     for more information and some solutions.
+- ``tables`` format come with a writing performance penalty as compared to
+  ``fixed`` stores. The benefit is the ability to append/delete and
+  query (potentially very large amounts of data).  Write times are
+  generally longer as compared with regular stores. Query times can
+  be quite fast, especially on an indexed axis.
+- You can pass ``chunksize=<int>`` to ``append``, specifying the
+  write chunksize (default is 50000). This will significantly lower
+  your memory usage on writing.
+- You can pass ``expectedrows=<int>`` to the first ``append``,
+  to set the TOTAL number of expected rows that ``PyTables`` will
+  expected. This will optimize read/write performance.
+- Duplicate rows can be written to tables, but are filtered out in
+  selection (with the last items being selected; thus a table is
+  unique on major, minor pairs)
+- A ``PerformanceWarning`` will be raised if you are attempting to
+  store types that will be pickled by PyTables (rather than stored as
+  endemic types). See
+  `Here <http://stackoverflow.com/questions/14355151/how-to-make-pandas-hdfstore-put-operation-faster/14370190#14370190>`__
+  for more information and some solutions.
 
 Experimental
 ~~~~~~~~~~~~
