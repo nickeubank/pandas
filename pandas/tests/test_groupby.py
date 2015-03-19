@@ -2947,6 +2947,21 @@ class TestGroupBy(tm.TestCase):
         assert_frame_equal(gr.mean(), aggr(np.mean))
         assert_frame_equal(gr.median(), aggr(np.median))
 
+    def test_groupby_sort(self):
+        # General test for stability of sort within groupby objects. 
+        
+        np.random.RandomState(42)
+        df = pd.DataFrame({'groups': np.random.randint(0,10, size = 100), 'random_vars': np.random.rand(1,100)[0]})
+        df.sort('random_vars', inplace = True)
+        
+        def sort_test(x):
+            assert_frame_equal(x, x.sort('random_vars'))
+            # Must return something or will throw error as of '0.16.0rc1-32-g5a417ec' 
+            # (Issue #9684)
+            return 1
+            
+        df.groupby('groups').apply(sort_test)
+
     def test_groupby_sort_multi(self):
         df = DataFrame({'a': ['foo', 'bar', 'baz'],
                         'b': [3, 2, 1],
