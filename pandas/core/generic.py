@@ -720,7 +720,7 @@ class NDFrame(PandasObject):
         "iteritems alias used to get around 2to3. Deprecated"
         warnings.warn("iterkv is deprecated and will be removed in a future "
                       "release, use ``iteritems`` instead.",
-                      FutureWarning)
+                      FutureWarning, stacklevel=2)
         return self.iteritems(*args, **kwargs)
 
     def __len__(self):
