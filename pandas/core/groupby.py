@@ -720,6 +720,12 @@ class GroupBy(PandasObject):
                       FutureWarning, stacklevel=2)
         return self.nth(i)
 
+    def count(self):
+        """ Compute count of group, excluding missing values """
+
+        # defined here for API doc
+        raise NotImplementedError
+
     def mean(self):
         """
         Compute mean of groups, excluding missing values
@@ -2675,6 +2681,7 @@ class SeriesGroupBy(GroupBy):
         return Series(out, index=mi)
 
     def count(self):
+        """ Compute count of group, excluding missing values """
         ids, _, ngroups = self.grouper.group_info
         val = self.obj.get_values()
 
@@ -3459,6 +3466,7 @@ class DataFrameGroupBy(NDFrameGroupBy):
             keys=self._selected_obj.columns, axis=1)
 
     def count(self):
+        """ Compute count of group, excluding missing values """
         from functools import partial
         from pandas.lib import count_level_2d
         from pandas.core.common import _isnull_ndarraylike as isnull
