@@ -841,7 +841,7 @@ class Series(base.IndexOpsMixin, generic.NDFrame):
         DEPRECATED. Use ``.iloc[i]`` or ``.iat[i]`` instead
         """
 
-        warnings.warn("iget(i) is deprecated. Please use .iloc[i]",
+        warnings.warn("iget(i) is deprecated. Please use .iloc[i] or .iat[i]",
                       FutureWarning, stacklevel=2)
         return self._ixs(i)
 
@@ -849,7 +849,7 @@ class Series(base.IndexOpsMixin, generic.NDFrame):
         """
         DEPRECATED. Use ``.iloc[i]`` or ``.iat[i]`` instead
         """
-        warnings.warn("irow(i) is deprecated. Please use .iloc[i] or iat[i]",
+        warnings.warn("irow(i) is deprecated. Please use .iloc[i] or .iat[i]",
                       FutureWarning, stacklevel=2)
         return self._ixs(i)
 
