@@ -88,6 +88,7 @@ class NDFrame(PandasObject):
     _metadata = []
     _parent_copy_on_write = True
     _parent = []
+    _children = []
 
     def __init__(self, data, axes=None, copy=False, dtype=None,
                  fastpath=False):
@@ -1220,6 +1221,7 @@ class NDFrame(PandasObject):
             self._parent.extend(ref._parent)
             self._parent.append(weakref.ref(ref))
         return self
+        
 
     def _check_copy_on_write(self):
 
@@ -1230,70 +1232,10 @@ class NDFrame(PandasObject):
             if isinstance(self._parent, Exception):
                 raise self._parent
 
-            def get_names_for_obj(__really_unused_name__342424__):
-                """Returns all named references for self"""
-
-                removals = set(["__really_unused_name__342424__", "__really_unused_name__xxxxx__", "self"])
-                refs = gc.get_referrers(__really_unused_name__342424__)
-
-                names = []
-                for ref in refs:
-                    if inspect.isframe(ref):
-                        for name, __really_unused_name__xxxxx__ in compat.iteritems(ref.f_locals):
-                            if __really_unused_name__xxxxx__ is __really_unused_name__342424__:
-                                names.append(name)
-                    elif isinstance(ref, dict):
-                        for name, __really_unused_name__xxxxx__ in compat.iteritems(ref):
-                            if __really_unused_name__xxxxx__ is __really_unused_name__342424__:
-                                names.append(name)
-
-                for name, __really_unused_name__xxxxx__ in compat.iteritems(globals()):
-                    if __really_unused_name__xxxxx__ is __really_unused_name__342424__:
-                        names.append(name)
-
-                return set(names) - removals
-
-            # collect garbage
-            # if we don't have references, then we have a reassignment case
-            #    e.g. df = df.ix[....]; since the reference is gone
-            #    we can just copy and be done
-
-            # otherwise we have chained indexing, raise and error
-            def error():
-                raise SettingWithCopyError("chained indexing detected, you can fix this ......")
-
-            gc.collect(2)
-            if len(self._parent) > 1:
-                error()
-
-            p = self._parent[0]()
-            if p is not None:
-                names = get_names_for_obj(self)
-                if not len(names):
-                    error()
-
             # provide copy-on-write
             self._data = self._data.copy()
             self._parent = []
 
-    def _check_is_chained_assignment_possible(self):
-        """
-        check if we are a view, have a cacher, and are of mixed type
-        if so, then force a copy_on_write check
-
-        should be called just near setting a value
-
-        will return a boolean if it we are a view and are cached, but a single-dtype
-        meaning that the cacher should be updated following setting
-        """
-        if self._is_cached:
-            ref = self._get_cacher()
-            if ref is not None:
-                self._check_copy_on_write()
-            return True
-        elif self._parent:
-            self._check_copy_on_write()
-        return False
 
     def __delitem__(self, key):
         """

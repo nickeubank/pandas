@@ -21,9 +21,10 @@ from pandas.core.common import (isnull, notnull, is_bool_indexer,
                                 needs_i8_conversion, i8_boxer,
                                 _possibly_cast_to_datetime, _possibly_castable,
                                 _possibly_convert_platform, _try_sort,
-                                is_int64_dtype, is_internal_type, is_datetimetz,
-                                _maybe_match_name, ABCSparseArray,
-                                _coerce_to_dtype, SettingWithCopyError,
+                                is_int64_dtype,
+                                ABCSparseArray, is_internal_type, is_datetimetz,
+                                 _maybe_match_name, _coerce_to_dtype,
+                                SettingImmutableError, SettingWithCopyError,
                                 _maybe_box_datetimelike, ABCDataFrame,
                                 _dict_compat)
 from pandas.core.index import (Index, MultiIndex, InvalidIndexError,
@@ -646,12 +647,17 @@ class Series(base.IndexOpsMixin, generic.NDFrame):
         # If key is contained, would have returned by now
         indexer, new_index = self.index.get_loc_level(key)
 <<<<<<< HEAD
+<<<<<<< HEAD
         return self._constructor(self.values[indexer],
                                  index=new_index)._set_parent(self).__finalize__(self)
 =======
         return self._constructor(self._values[indexer],
                                  index=new_index).__finalize__(self)
 >>>>>>> API: add DatetimeBlockTZ #8260
+=======
+        return self._constructor(self.values[indexer],
+                                 index=new_index)._set_parent(self).__finalize__(self)
+>>>>>>> modify jreback/copy to drop gc use
 
     def _get_values(self, indexer):
         try:
@@ -713,19 +719,6 @@ class Series(base.IndexOpsMixin, generic.NDFrame):
 
             self._set_with(key, value)
 
-        # do the setitem
-        try:
-            cacher_needs_updating = self._check_is_chained_assignment_possible()
-        except (SettingWithCopyError):
-
-            # we have a chained assignment
-            # assign back to the original
-            obj = self._parent[0]()
-            if isinstance(obj, Series):
-                obj.loc[key] = value
-            else:
-                obj.loc[self.name,key] = value
-            return
 
         setitem(key, value)
         if cacher_needs_updating:
