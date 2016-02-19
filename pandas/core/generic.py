@@ -1585,7 +1585,8 @@ class NDFrame(PandasObject):
 
         return self.reindex(**d)
 
-    def drop(self, labels, axis=0, level=None, inplace=False, errors='raise'):
+    def drop(self, labels=None, axis=0, level=None, inplace=False, errors='raise', 
+             columns=None, index=None):
         """
         Return new object with labels in requested axis removed
 
@@ -1606,9 +1607,26 @@ class NDFrame(PandasObject):
         -------
         dropped : type of caller
         """
+
+        if columns is not None:
+            if axis is not 0 or labels is not None or index is not None:  
+                raise ValueError("Cannot combine columns argument with axis, labels or index")
+            else: 
+                labels = columns
+                axis = 0
+            
+        if index is not None:
+            if axis is not 0 or labels is not None:
+                raise ValueError("Cannot combine index argument with axis, labels, or columns")
+            else:
+                labels = index
+                axis = 1
+
+
         axis = self._get_axis_number(axis)
         axis_name = self._get_axis_name(axis)
         axis, axis_ = self._get_axis(axis), axis
+
 
         if axis.is_unique:
             if level is not None:
